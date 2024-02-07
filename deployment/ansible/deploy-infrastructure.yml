@@ -1,0 +1,110 @@
+---
+- name: Deploy ELK Stack, Database, Backend, Monitoring Infrastructure
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Deploy Elasticsearch
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/elastic/elasticsearch && terraform init && terraform apply -auto-approve"
+
+    - name: 5 sec pause for elasticsearch
+      pause:
+        seconds: 5
+
+    - name: Get Elasticsearch IP
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/elastic/elasticsearch && terraform output elasticsearch_ip"
+      register: elasticsearch_output
+
+    - name: Print Elasticsearch IP
+      debug:
+        var: "http://{{ elasticsearch_output.stdout_lines[0] | replace('\"', '') }}:9200"
+
+    - name: Replace the ELASTICSEARCH_URL with new ip
+      ansible.builtin.lineinfile:
+        path: ./../terraform/elastic/logstash/main.tf
+        regexp: '^(\s*ELASTICSEARCH_URL\s*=\s*)"http://.*"'
+        line: "      ELASTICSEARCH_URL = \"http://{{ elasticsearch_output.stdout_lines[0] | replace('\"', '') }}:9200\""
+
+    - name: Replace the ELASTICSEARCH_HOSTS with new ip
+      ansible.builtin.lineinfile:
+        path: ./../terraform/elastic/logstash/main.tf
+        regexp: '^(\s*ELASTICSEARCH_HOSTS\s*=\s*).*"'
+        line: "      ELASTICSEARCH_HOSTS = \"[\\\"http://{{ elasticsearch_output.stdout_lines[0] | replace('\"', '') }}:9200\\\"]\""
+
+    - name: Replace the xpack.monitoring.elasticsearch.hosts with new ip
+      ansible.builtin.lineinfile:
+        path: ./../terraform/elastic/logstash/config/logstash.yml
+        regexp: '^xpack.monitoring.elasticsearch.hosts:.*\]$'
+        line: "xpack.monitoring.elasticsearch.hosts: [ \"http://{{ elasticsearch_output.stdout_lines[0] | replace('\"', '') }}:9200\" ]"
+
+    - name: Replace the logstash.conf with new ip
+      ansible.builtin.lineinfile:
+        path: ./../terraform/elastic/logstash/pipeline/logstash.conf
+        regexp: '^(\s*hosts\s*=>\s*").*("\s*)$'
+        line: "    hosts => \"http://{{ elasticsearch_output.stdout_lines[0] | replace('\"', '') }}:9200\""
+
+    - name: Deploy Logstash and Kibana
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/elastic/logstash && terraform init && terraform apply -auto-approve"
+
+    - name: 5 sec pause for elasticsearch
+      pause:
+        seconds: 5
+
+    - name: Get Logstash IP
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/elastic/logstash && terraform output logstash_ip"
+      register: logstash_output
+
+    - name: Replace the LOGSTASH_HOST (spring-app env var) with new ip
+      ansible.builtin.lineinfile:
+        path: ./../terraform/backend/main.tf
+        regexp: '^(\s*LOGSTASH_HOST\s*=\s*)".*"'
+        line: "      LOGSTASH_HOST = \"{{ logstash_output.stdout_lines[0] | replace('\"', '') }}\""
+
+    - name: Deploy Mysql Database
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/database && terraform init && terraform apply -auto-approve"
+
+    - name: Get Database IP
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/database && terraform output database_ip"
+      register: database_output
+
+    - name: Print Database IP
+      debug:
+        var: "jdbc:mysql://{{ database_output.stdout_lines[0] | replace('\"', '') }}:3306/ix"
+
+    - name: 5 sec pause for database
+      pause:
+        seconds: 5
+
+    - name: Deploy Spring boot
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/backend && terraform init && terraform apply -auto-approve -var='database_url=jdbc:mysql://{{ database_output.stdout_lines[0] | replace('\"', '') }}:3306/ix'"
+
+    - name: 10 sec pause for spring boot
+      pause:
+        seconds: 10
+
+    - name: Get spring boot IP
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/backend && terraform output backend_ip"
+      register: backend_output
+
+    - name: Print spring boot IP
+      debug:
+        var: "http://{{ backend_output.stdout_lines[0] | replace('\"', '') }}:8080"
+
+    - name: Replace the 'targets' line
+      ansible.builtin.lineinfile:
+        path: ./../terraform/monitoring/prometheus.yml
+        regexp: '^(\s+- targets: \[)''.*''(\])'
+        line: "      - targets: ['{{ backend_output.stdout_lines[0] | replace('\"', '') }}:8080']"
+
+    - name: Deploy Monitoring - Prometheus & Grafana
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/monitoring && terraform init && terraform apply -auto-approve"
+

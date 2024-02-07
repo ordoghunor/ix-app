@@ -1,0 +1,11 @@
+
+# az storage file upload --share-name prometheus-config --source deployment/azure/aci/prometheus.yml --account-name ixprometheusstorage --account-key oooM+nwn5sbLtwsi7Nyka+FVcrjYLUq9cqtiYWAvasiM71YTnwGBExRGser495OoOpNaRSlGFX8C+ASt7njAOg== --path prometheus.yml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'ix-app'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['20.8.229.40:8080']

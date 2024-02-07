@@ -1,0 +1,66 @@
+---
+- name: Deploy Elasticsearch, Logstash and Kibana Infrastructure
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Deploy Elasticsearch
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/elastic/elasticsearch && terraform init && terraform apply -auto-approve"
+
+    - name: 5 sec pause for elasticsearch
+      pause:
+        seconds: 5
+
+    - name: Get Elasticsearch IP
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/elastic/elasticsearch && terraform output elasticsearch_ip"
+      register: elasticsearch_output
+
+    - name: Print Elasticsearch IP
+      debug:
+        var: "http://{{ elasticsearch_output.stdout_lines[0] | replace('\"', '') }}:9200"
+
+    - name: Replace the ELASTICSEARCH_URL with new ip
+      ansible.builtin.lineinfile:
+        path: ./../terraform/elastic/logstash/main.tf
+        regexp: '^(\s*ELASTICSEARCH_URL\s*=\s*)"http://.*"'
+        line: "      ELASTICSEARCH_URL = \"http://{{ elasticsearch_output.stdout_lines[0] | replace('\"', '') }}:9200\""
+
+    - name: Replace the ELASTICSEARCH_HOSTS with new ip
+      ansible.builtin.lineinfile:
+        path: ./../terraform/elastic/logstash/main.tf
+        regexp: '^(\s*ELASTICSEARCH_HOSTS\s*=\s*).*"'
+        line: "      ELASTICSEARCH_HOSTS = \"[\\\"http://{{ elasticsearch_output.stdout_lines[0] | replace('\"', '') }}:9200\\\"]\""
+
+    - name: Replace the xpack.monitoring.elasticsearch.hosts with new ip
+      ansible.builtin.lineinfile:
+        path: ./../terraform/elastic/logstash/config/logstash.yml
+        regexp: '^xpack.monitoring.elasticsearch.hosts:.*\]$'
+        line: "xpack.monitoring.elasticsearch.hosts: [ \"http://{{ elasticsearch_output.stdout_lines[0] | replace('\"', '') }}:9200\" ]"
+
+    - name: Replace the logstash.conf with new ip
+      ansible.builtin.lineinfile:
+        path: ./../terraform/elastic/logstash/pipeline/logstash.conf
+        regexp: '^(\s*hosts\s*=>\s*").*("\s*)$'
+        line: "    hosts => \"http://{{ elasticsearch_output.stdout_lines[0] | replace('\"', '') }}:9200\""
+
+    - name: Deploy Logstash and Kibana
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/elastic/logstash && terraform init && terraform apply -auto-approve"
+
+    - name: 5 sec pause for elasticsearch
+      pause:
+        seconds: 5
+
+    - name: Get Logstash IP
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/elastic/logstash && terraform output logstash_ip"
+      register: logstash_output
+
+    - name: Replace the LOGSTASH_HOST (spring-app env var) with new ip
+      ansible.builtin.lineinfile:
+        path: ./../terraform/backend/main.tf
+        regexp: '^(\s*LOGSTASH_HOST\s*=\s*)".*"'
+        line: "      LOGSTASH_HOST = \"{{ logstash_output.stdout_lines[0] | replace('\"', '') }}\""
+

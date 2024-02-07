@@ -1,0 +1,35 @@
+---
+- name: Destroy Database, Backend, Monitoring Infrastructure
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Destroy Elasticsearch
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/elastic/elasticsearch && terraform destroy -auto-approve"
+      async: 300
+      poll: 0
+
+    - name: Destroy Logstash & Kibana
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/elastic/logstash && terraform destroy -auto-approve"
+      async: 300
+      poll: 0
+
+    - name: Destroy Database
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/database && terraform destroy -auto-approve"
+      async: 300
+      poll: 0
+
+    - name: Destroy Backend
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/backend && terraform destroy -auto-approve"
+      async: 300
+      poll: 0
+
+    - name: Destroy Monitoring
+      ansible.builtin.shell:
+        cmd: "cd ./../terraform/monitoring && terraform destroy -auto-approve"
+      async: 300
+      poll: 0

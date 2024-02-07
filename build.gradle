@@ -1,0 +1,61 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.2.2-SNAPSHOT'
+	id 'io.spring.dependency-management' version '1.1.4'
+	id 'maven-publish'
+}
+
+group = 'com.stonerescue'
+//version = '0.0.1-SNAPSHOT'
+
+java {
+	sourceCompatibility = '17'
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
+	maven { url 'https://repo.spring.io/snapshot' }
+}
+
+dependencies {
+	// 2.6.13
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: '3.2.1'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '3.2.1'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-validation', version: '3.2.1'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version: '3.2.1'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: '3.2.1'
+//	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: '3.2.1'
+
+
+	implementation group: 'io.micrometer', name: 'micrometer-core', version: '1.12.1'
+	implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: '1.12.1'
+
+	testImplementation group: 'org.slf4j', name: 'slf4j-simple', version: '2.0.10'
+	implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.10'
+
+//	implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.22.1'
+	runtimeOnly group: 'ch.qos.logback', name:'logback-classic', version: '1.4.12'
+	// https://mvnrepository.com/artifact/net.logstash.logback/logstash-logback-encoder
+	implementation group: 'net.logstash.logback', name: 'logstash-logback-encoder', version: '7.4'
+
+	implementation group: 'org.hibernate', name: 'hibernate-core', version: '6.4.1.Final', ext: 'pom'
+
+	compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.24'
+	annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.24'
+	implementation group: 'com.zaxxer', name: 'HikariCP', version: '3.4.1'
+	runtimeOnly group: 'com.mysql', name: 'mysql-connector-j', version: '8.2.0'
+	implementation group: 'org.mapstruct', name: 'mapstruct', version: '1.5.3.Final'
+	annotationProcessor group: 'org.mapstruct', name: 'mapstruct-processor', version: '1.5.3.Final'
+	implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.4.0-b180830.0359'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

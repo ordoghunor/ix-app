@@ -1,0 +1,25 @@
+#az container create --resource-group ix-app-backend --file deployment/azure/aci/aci-manifest-backend.yml
+apiVersion: '2018-10-01'
+location: westeurope
+name: ix-backend
+properties:
+  containers:
+    - name: ix-backend
+      properties:
+        image: ordoghunor/ix-backend:0.2.5
+        ports:
+          - port: 8080
+            protocol: TCP
+        resources:
+          requests:
+            cpu: 3.0
+            memoryInGB: 1.5
+        environmentVariables:
+          - name: DATABASE_URL
+            value: jdbc:mysql://20.8.46.48:3306/ix
+  osType: Linux
+  ipAddress:
+    type: Public
+    ports:
+      - protocol: TCP
+        port: 8080

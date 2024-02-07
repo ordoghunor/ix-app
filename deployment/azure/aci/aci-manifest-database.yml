@@ -1,0 +1,27 @@
+#az container create --resource-group ix-app-database --file deployment/azure/aci/aci-manifest-database.yml
+apiVersion: '2018-10-01'
+location: westeurope  # Replace 'westeurope' with your desired Azure region
+name: ix-database
+properties:
+  containers:
+    - name: ix-mysql
+      properties:
+        image: mysql:8.0
+        ports:
+          - port: 3306
+            protocol: TCP
+        environmentVariables:
+          - name: MYSQL_ROOT_PASSWORD
+            value: "23hx86GQWER4"
+          - name: MYSQL_DATABASE
+            value: "ix"
+        resources:
+          requests:
+            cpu: 1.0  # Define your desired CPU units
+            memoryInGB: 1.5
+  osType: Linux
+  ipAddress:
+    type: Public
+    ports:
+      - protocol: TCP
+        port: 3306  # Port for MySQL

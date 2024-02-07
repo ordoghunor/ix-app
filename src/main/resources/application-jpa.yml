@@ -1,0 +1,15 @@
+spring.jpa.show-sql: true
+spring.jpa.hibernate.ddl-auto: update
+spring.datasource:
+  driver_class_name: com.mysql.cj.jdbc.Driver
+  url: ${DATABASE_URL}
+  username: root
+  password: 23hx86GQWER4
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 8
+      minimum-idle: 4
+      connection-timeout: 15000
+      max-lifetime: 300000
+      idle-timeout: 200000
