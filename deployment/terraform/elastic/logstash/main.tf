@@ -104,8 +104,8 @@ resource "azurerm_container_group" "kibana-cg" {
     memory = 1.5
     name   = "kibana"
     environment_variables = {
-      ELASTICSEARCH_URL = "http://20.23.12.87:9200"
-      ELASTICSEARCH_HOSTS = "[\"http://20.23.12.87:9200\"]"
+      ELASTICSEARCH_URL = "http://4.245.97.236:9200"
+      ELASTICSEARCH_HOSTS = "[\"http://4.245.97.236:9200\"]"
       TINI_SUBREAPER = true
     }
     ports {

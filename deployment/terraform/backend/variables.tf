@@ -7,5 +7,5 @@ variable "database_url" {
 variable "container_image" {
   description = "Docker container image for the backend"
   type        = string
-  default     = "docker.io/ordoghunor/ix-spring:0.0.9"
+  default     = "docker.io/ordoghunor/ix-spring:0.6.4"
 }
