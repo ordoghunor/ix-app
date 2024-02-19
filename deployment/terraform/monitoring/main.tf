@@ -13,6 +13,7 @@ resource "azurerm_storage_account" "ixprometheusstorage" {
   location                 = azurerm_resource_group.ix-app-monitoring.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
+  depends_on = [azurerm_resource_group.ix-app-monitoring]
 }
 
 resource "azurerm_storage_share" "prometheus-config" {
@@ -20,19 +21,32 @@ resource "azurerm_storage_share" "prometheus-config" {
   storage_account_name = azurerm_storage_account.ixprometheusstorage.name
   quota                = 1
   access_tier          = "Hot"
+  depends_on = [
+    azurerm_storage_account.ixprometheusstorage,
+    azurerm_resource_group.ix-app-monitoring
+  ]
 }
 
 resource "azurerm_storage_share_file" "prometheus-file" {
   name             = "prometheus.yml"
   storage_share_id = azurerm_storage_share.prometheus-config.id
   source = "./prometheus.yml"
+  depends_on = [
+    azurerm_storage_account.ixprometheusstorage,
+    azurerm_resource_group.ix-app-monitoring,
+    azurerm_storage_share.prometheus-config
+  ]
 }
 
 resource "azurerm_container_group" "ix-monitoring" {
   name                = "ix-monitoring"
   location            = azurerm_resource_group.ix-app-monitoring.location
   resource_group_name = azurerm_resource_group.ix-app-monitoring.name
-  depends_on          = [azurerm_storage_share_file.prometheus-file]
+  depends_on          = [
+    azurerm_storage_account.ixprometheusstorage,
+    azurerm_resource_group.ix-app-monitoring,
+    azurerm_storage_share_file.prometheus-file
+  ]
   os_type = "Linux"
 
   container {

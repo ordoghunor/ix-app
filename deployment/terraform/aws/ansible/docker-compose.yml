@@ -1,0 +1,124 @@
+version: '3.7'
+
+services:
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.3.3
+    networks:
+      - ix_network
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    environment:
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.type=single-node"
+      - xpack.security.enabled=false
+
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.3.3
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+    depends_on:
+      - elasticsearch
+    networks:
+      - ix_network
+
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.3.3
+    container_name: logstash
+    volumes:
+      - /ix/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - /ix/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    ports:
+      - "5044:5044"
+      - "5000:5000"
+      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - ix_network
+    depends_on:
+      - elasticsearch
+
+
+  database:
+    image: mysql:8.0
+    container_name: mysql
+    networks:
+      - ix_network
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 23hx86GQWER4
+      MYSQL_DATABASE: ix
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+    depends_on:
+      - logstash
+
+
+  ix-spring:
+    container_name: ix-spring
+    image: docker.io/ordoghunor/ix-spring:0.6.4
+    networks:
+      - ix_network
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=jdbc:mysql://mysql:3306/ix
+      - LOGSTASH_HOST=logstash
+
+
+  prometheus:
+    networks:
+      - ix_network
+    depends_on:
+      - ix-spring
+    image: prom/prometheus:v2.44.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - /ix/prometheus.yml:/etc/prometheus/prometheus.yml
+
+
+  grafana:
+    networks:
+      - ix_network
+    depends_on:
+      - prometheus
+    image: grafana/grafana:9.5.2
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=adminx
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - /ix/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+
+
+networks:
+  ix_network:
+    driver: bridge
+
+volumes:
+  elasticsearch_data:
+    driver: local

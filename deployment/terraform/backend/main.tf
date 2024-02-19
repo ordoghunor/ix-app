@@ -3,7 +3,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "ix-app-backend" {
-  name     = "ix-app-backend"
+  name     = "ix-app-spring"
   location = "germanywestcentral"
 }
 
@@ -16,7 +16,7 @@ resource "azurerm_container_group" "ix-backend" {
   os_type = "Linux"
 
   container {
-    name   = "ix-backend"
+    name   = "ix-spring"
     image  = var.container_image
 
     ports {
@@ -26,7 +26,7 @@ resource "azurerm_container_group" "ix-backend" {
 
     environment_variables = {
       DATABASE_URL = var.database_url
-      LOGSTASH_HOST = "4.245.82.251"
+      LOGSTASH_HOST = "20.31.141.112"
     }
 
     cpu    = 1.0

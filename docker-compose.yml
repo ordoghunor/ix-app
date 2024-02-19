@@ -3,7 +3,7 @@ version: '3.7'
 services:
   database:
     image: mysql:8.0
-    container_name: ix-mysql
+    container_name: mysql
     networks:
       - ix_network
     command: --default-authentication-plugin=mysql_native_password
@@ -13,44 +13,37 @@ services:
       MYSQL_DATABASE: ix
     ports:
       - "3306:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
 
-#  backend:
-#    container_name: ix-backend
-#    networks:
-#      - ix_network
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    depends_on:
-#      - database
-#    ports:
-#      - "8080:8080"
-
-  backend:
-    container_name: ix-backend
-    image: ordoghunor/ix-backend:0.2.10
+  ix-spring:
+    container_name: ix-spring
+    image: docker.io/ordoghunor/ix-spring:0.6.4
     networks:
       - ix_network
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
-      - DATABASE_URL=jdbc:mysql://ix-mysql:3306/ix
-      - LOGSTASH_HOST=logstash
-      - LOGSTASH_PORT=5000
+      - DATABASE_URL=jdbc:mysql://mysql:3306/ix
+      - LOGSTASH_HOST=localhost
 
   prometheus:
     networks:
       - ix_network
     depends_on:
-      - backend
+      - ix-spring
     image: prom/prometheus:v2.44.0
     container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
 
   grafana:
     networks:
@@ -62,6 +55,9 @@ services:
     ports:
       - "3000:3000"
     restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=adminx
+      - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
 

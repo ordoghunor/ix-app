@@ -8,9 +8,9 @@
       ansible.builtin.shell:
         cmd: "cd ./../terraform/elastic/elasticsearch && terraform init && terraform apply -auto-approve"
 
-    - name: 5 sec pause for elasticsearch
+    - name: 10 sec pause for elasticsearch
       pause:
-        seconds: 5
+        seconds: 10
 
     - name: Get Elasticsearch IP
       ansible.builtin.shell:
@@ -49,7 +49,7 @@
       ansible.builtin.shell:
         cmd: "cd ./../terraform/elastic/logstash && terraform init && terraform apply -auto-approve"
 
-    - name: 5 sec pause for elasticsearch
+    - name: 5 sec pause for logstash and kibana
       pause:
         seconds: 5
 
@@ -77,9 +77,9 @@
       debug:
         var: "jdbc:mysql://{{ database_output.stdout_lines[0] | replace('\"', '') }}:3306/ix"
 
-    - name: 5 sec pause for database
+    - name: 10 sec pause for database
       pause:
-        seconds: 5
+        seconds: 10
 
     - name: Deploy Spring boot
       ansible.builtin.shell:
