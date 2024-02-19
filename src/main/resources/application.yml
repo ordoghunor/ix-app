@@ -5,5 +5,7 @@ management:
       exposure:
         include: 'prometheus'
 management.endpoint.prometheus.enabled: true
+
 server:
   port: 8080
+  forward-headers-strategy: native

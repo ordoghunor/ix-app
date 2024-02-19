@@ -11,5 +11,4 @@ public class IxApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(IxApplication.class, args);
 	}
-
 }

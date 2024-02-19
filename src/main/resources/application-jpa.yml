@@ -3,6 +3,7 @@ spring.jpa.hibernate.ddl-auto: update
 spring.datasource:
   driver_class_name: com.mysql.cj.jdbc.Driver
   url: ${DATABASE_URL}
+#  url: jdbc:mysql://localhost:3306/ix
   username: root
   password: 23hx86GQWER4
 spring:

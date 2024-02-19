@@ -7,6 +7,7 @@ import com.stonerescue.ix.controller.mapper.CustomerMapper;
 import com.stonerescue.ix.dao.CustomerDao;
 import com.stonerescue.ix.model.Customer;
 import com.stonerescue.ix.service.CustomerService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -30,10 +30,14 @@ public class CustomerController {
     @Autowired
     private CustomerService customerService;
 
+    @GetMapping("/headers")
+    public Map<String, String> testHeaders(@RequestHeader Map<String, String> headers) {
+        return Collections.unmodifiableMap(headers);
+    }
+
     @GetMapping
     private Collection<CustomerListingDto> getCustomers() {
         LOGGER.info("Getting all customers.");
-
         return customerMapper.modelsToDtos(customerDao.findAll());
     }
 
