@@ -1,0 +1,45 @@
+---
+- name: Setting up ec2 instance
+  hosts: aws_instances
+  become: true
+  vars:
+    ansible_ssh_private_key_file: "~/awsfile"
+
+  tasks:
+    - file:
+        path: /ix
+        state: directory
+
+    - name: Copy prometheus config file to the ec2 instance
+      copy:
+        src: ./../../../../monitoring/prometheus/prometheus.yml
+        dest: /ix/prometheus.yml
+
+    - name: Copy grafana config file to the ec2 instance
+      copy:
+        src: ./../../../../monitoring/grafana/provisioning/datasources/datasources.yml
+        dest: /ix/datasources.yml
+
+    - name: Copy logstash config file to the ec2 instance
+      copy:
+        src: ./../../../../elk/logstash/config/logstash.yml
+        dest: /ix/logstash.yml
+
+    - name: Copy logstash pipeline file to the ec2 instance
+      copy:
+        src: ./../../../../elk/logstash/pipeline/logstash.conf
+        dest: /ix/logstash.conf
+
+    - name: Copy docker-compose.yml to the ec2 instance
+      copy:
+        src: ./docker-compose.yml
+        dest: /ix/docker-compose.yml
+
+#    - name: Run echo command with variable
+#      ansible.builtin.shell:
+#        cmd: docker-compose up -d
+#        chdir: cd /ix
+
+#    - name: deploy Docker Compose stack
+#      community.docker.docker_compose:
+#        project_src: /ix
